@@ -1,260 +1,214 @@
 // This is your Prisma schema file
-// Learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 // Core Models
 model User {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  email         String    @unique
-  name          String?
-  password      String?
-  role          Role      @default(USER)
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  email            String            @unique
+  name             String?
+  password         String?
+  // Change: Enum -> String
+  role             String            @default("USER") 
   stripeCustomerId String?
-  subscription  UserSubscription?
-  creditBalance UserCreditBalance?
-  payments      PaymentTransaction[]
-  projects      Project[]
-  apiUsage      ApiUsage[]
-  
+  subscription     UserSubscription?
+  creditBalance    UserCreditBalance?
+  payments         PaymentTransaction[]
+  projects         Project[]
+  apiUsage         ApiUsage[]
+
   @@map("users")
 }
 
 model Project {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  title         String
-  description   String?
-  status        ProjectStatus @default(DRAFT)
-  wordCount     Int         @default(0)
-  pageCount     Int         @default(0)
-  tone          String      @default("professional")
-  genre         String?
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  status      String   @default("draft")
+  wordCount   Int      @default(0)
+  pageCount   Int      @default(0)
+  tone        String   @default("professional")
+  genre       String?
+  targetPages Int      @default(100)
+  userId      String
   
-  user          User       @relation(fields: [userId], references: [id])
-  userId        String
-  
-  chapters      Chapter[]
-  characters    Character[]
-  settings      Setting[]
-  exports       Export[]
-  
+  user        User       @relation(fields: [userId], references: [id])
+  chapters    Chapter[]
+  characters  Character[]
+  settings    Setting[]
+  exports     Export[]
+
   @@map("projects")
 }
 
 model Chapter {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  title         String
-  content       String
-  wordCount     Int
-  status        ChapterStatus @default(DRAFT)
-  order         Int
-  
-  project       Project    @relation(fields: [projectId], references: [id])
-  projectId     String
-  
-  scenes        Scene[]
-  
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  title     String
+  content   String
+  wordCount Int
+  // Change: Enum -> String
+  status    String   @default("DRAFT")
+  order     Int
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  scenes Scene[]
+
   @@map("chapters")
 }
 
 model Scene {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  title         String
-  content       String
-  wordCount     Int
-  order         Int
-  
-  chapter       Chapter    @relation(fields: [chapterId], references: [id])
-  chapterId     String
-  
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  title     String
+  content   String
+  wordCount Int
+  order     Int
+
+  chapter   Chapter @relation(fields: [chapterId], references: [id])
+  chapterId String
+
   @@map("scenes")
 }
 
 model Character {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  name          String
-  description   String
-  age           Int?
-  gender        String?
-  role          String?
-  personality   String?
-  appearance    String?
-  
-  project       Project    @relation(fields: [projectId], references: [id])
-  projectId     String
-  
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String
+  age         Int?
+  gender      String?
+  role        String?
+  personality String?
+  appearance  String?
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
   @@map("characters")
 }
 
 model Setting {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  name          String
-  description   String
-  locationType  String?
-  timePeriod    String?
-  
-  project       Project    @relation(fields: [projectId], references: [id])
-  projectId     String
-  
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  name         String
+  description  String
+  locationType String?
+  timePeriod   String?
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
   @@map("settings")
 }
 
 model Export {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  type          ExportType
-  status        ExportStatus @default(PENDING)
-  fileUrl       String?
-  fileSize      Int?
-  fileType      String?
-  
-  project       Project    @relation(fields: [projectId], references: [id])
-  projectId     String
-  
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Change: Enum -> String
+  type      String
+  // Change: Enum -> String
+  status    String   @default("PENDING")
+  fileUrl   String?
+  fileSize  Int?
+  fileType  String?
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
   @@map("exports")
 }
 
 model ApiUsage {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  service       ApiService
-  endpoint      String
-  requestCount  Int       @default(1)
-  tokenUsage    Int?
-  status        Int
-  responseTime  Int? // in ms
-  
-  user          User       @relation(fields: [userId], references: [id])
-  userId        String
-  
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  // Change: Enum -> String
+  service      String
+  endpoint     String
+  requestCount Int      @default(1)
+  tokenUsage   Int?
+  status       Int
+  responseTime Int? // in ms
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
   @@map("api_usage")
 }
 
 model UserSubscription {
-  id                    String    @id @default(cuid())
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  userId                String    @unique
-  user                  User      @relation(fields: [userId], references: [id])
-  planId                String
-  status                String
-  currentPeriodEnd      DateTime
-  cancelAtPeriodEnd     Boolean   @default(false)
-  stripeSubscriptionId  String?
-  
+  id                   String   @id @default(cuid())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id])
+  planId               String
+  status               String
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  stripeSubscriptionId String?
+
   @@map("user_subscriptions")
 }
 
 model UserCreditBalance {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id])
-  balance       Int       @default(0)
-  lastUpdated   DateTime  @updatedAt
-  
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  balance     Int      @default(0)
+  lastUpdated DateTime @updatedAt
+
   @@map("user_credit_balances")
 }
 
 model PaymentTransaction {
-  id                String    @id @default(cuid())
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  userId            String
-  user              User      @relation(fields: [userId], references: [id])
-  amount            Int
-  currency          String
-  type              String
-  status            String
-  stripePaymentId   String
-  metadata          Json?
-  
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  amount          Int
+  currency        String
+  type            String
+  status          String
+  stripePaymentId String
+  // Change: Json -> String (SQLite doesn't support native JSON)
+  metadata        String?
+
   @@map("payment_transactions")
 }
 
 model SystemMetric {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
-  metricType    MetricType
-  value         Float
-  metadata      Json?
-  
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  // Change: Enum -> String
+  metricType String
+  value      Float
+  // Change: Json -> String
+  metadata   String?
+
   @@map("system_metrics")
 }
 
-// Enums
-enum Role {
-  ADMIN
-  USER
-  GUEST
-}
-
-enum ProjectStatus {
-  DRAFT
-  OUTLINING
-  WRITING
-  REVISING
-  COMPLETED
-  ARCHIVED
-}
-
-enum ChapterStatus {
-  DRAFT
-  WRITING
-  REVISING
-  COMPLETED
-}
-
-enum ExportType {
-  PDF
-  EPUB
-  DOCX
-  AUDIOBOOK
-  COVER_IMAGE
-  FULL_PACKAGE
-}
-
-enum ExportStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-enum ApiService {
-  OPENROUTER
-  FAL_AI
-  GOOGLE_GEMINI
-  CLOUDFLARE_R2
-}
-
-enum MetricType {
-  ACTIVE_USERS
-  TOTAL_PROJECTS
-  TOTAL_WORDS
-  API_REQUESTS
-  SYSTEM_HEALTH
-  STORAGE_USAGE
-  QUEUE_LENGTH
-}
+// NOTE: Enums are removed because SQLite doesn't support them.
+// We treat them as Strings in the database.

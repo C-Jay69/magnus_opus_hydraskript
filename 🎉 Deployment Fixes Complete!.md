@@ -157,7 +157,8 @@ npx prisma generate
 npx prisma db push
 
 # 5. Run development server
-npm run dev
+
+
 ```
 
 ### Option 2: Docker Deployment
