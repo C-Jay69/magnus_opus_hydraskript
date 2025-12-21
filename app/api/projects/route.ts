@@ -26,7 +26,7 @@ const MOCK_PROJECTS = [
 // GET /api/projects - Fetch all projects
 export async function GET() {
   try {
-    return NextResponse.json(MOCK_PROJECTS)
+    return NextResponse.json({ projects: MOCK_PROJECTS })
   } catch (error) {
     console.error('Error fetching projects:', error)
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 })
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     MOCK_PROJECTS.unshift(newProject)
-    return NextResponse.json(newProject)
+    return NextResponse.json({ project: newProject })
   } catch (error) {
     console.error('Error creating project:', error)
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })

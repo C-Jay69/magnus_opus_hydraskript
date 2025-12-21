@@ -62,7 +62,7 @@ export const BOOK_TEMPLATES: BookTemplate[] = [
       audience: 'Business Professionals'
     },
     structureContext: 'Create an authority-building book with: Introduction establishing credibility, 5-7 core chapters with actionable insights, case studies and examples, conclusion with call-to-action.',
-    pageRange: { min: 80, max: 300 }
+    pageRange: { min: 50, max: 300 }
   },
   {
     id: 'fantasy',

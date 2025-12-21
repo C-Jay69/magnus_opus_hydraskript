@@ -37,7 +37,7 @@ export class ImageGenerator {
           num_images: numImages
         },
         logs: true
-      })
+      }) as { images?: Array<{ url: string }> }
 
       // Extract image URLs
       const images = result.images?.map((img: any) => img.url) || []

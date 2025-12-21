@@ -27,6 +27,7 @@ export default function WritePage() {
   const [project, setProject] = useState<Project | null>(null)
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedTemplate, setSelectedTemplate] = useState<BookTemplate | null>(null)
+  const [exportFormat, setExportFormat] = useState<'txt' | 'pdf' | 'docx' | 'epub'>('txt')
   const [config, setConfig] = useState({
     targetPages: 100,
     genre: 'Fiction',
@@ -87,10 +88,12 @@ export default function WritePage() {
         setCurrentStep(4)
       } else {
         alert('Failed to generate content')
+        setCurrentStep(2)
       }
     } catch (error) {
       console.error('Error generating content:', error)
       alert('Error generating content')
+      setCurrentStep(2)
     } finally {
       setIsGenerating(false)
     }
@@ -455,24 +458,23 @@ export default function WritePage() {
               gap: '1rem',
               justifyContent: 'center'
             }}>
-              
               <button
-                onClick={() => {
-                  // Create a text file with all chapters
-                  const fullText = generatedChapters
-                    .map(ch => `\n\nCHAPTER ${ch.chapterNumber}: ${ch.title}\n\n${ch.content}`)
-                    .join('\n\n---\n\n')
-                  
-                  const blob = new Blob([fullText], { type: 'text/plain' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = `${project?.title || 'book'}.txt`
-                  document.body.appendChild(a)
-                  a.click()
-                  document.body.removeChild(a)
-                  URL.revokeObjectURL(url)
+                onClick={() => setCurrentStep(1)}
+                style={{
+                  padding: '1rem 2rem',
+                  backgroundColor: '#FFFFFF',
+                  color: '#000000',
+                  border: '2px solid #000',
+                  fontWeight: '600',
+                  fontSize: '1.1rem',
+                  boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 1)',
+                  cursor: 'pointer'
                 }}
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleGenerate}
                 style={{
                   padding: '1rem 2rem',
                   backgroundColor: '#0000FF',
@@ -484,9 +486,8 @@ export default function WritePage() {
                   cursor: 'pointer'
                 }}
               >
-                💾 Save & Export
+                Generate Book →
               </button>
-
             </div>
           </div>
         )}
@@ -590,11 +591,72 @@ export default function WritePage() {
               ))}
             </div>
 
+            {/* Export Section */}
             <div style={{
               marginTop: '2rem',
               textAlign: 'center'
             }}>
+              {/* Format Selector */}
+              <div style={{
+                marginBottom: '1rem',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}>
+                {(['txt', 'pdf', 'docx', 'epub'] as const).map((format) => (
+                  <button
+                    key={format}
+                    onClick={() => setExportFormat(format)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: exportFormat === format ? '#0000FF' : '#FFFFFF',
+                      color: exportFormat === format ? '#FFFFFF' : '#000000',
+                      border: '2px solid #000',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {format}
+                  </button>
+                ))}
+              </div>
+
+              {/* Export Button */}
               <button
+                onClick={async () => {
+                  if (!project) return
+
+                  const metadata = {
+                    title: project.title,
+                    author: 'AI Generated',
+                    description: project.description
+                  }
+
+                  try {
+                    switch (exportFormat) {
+                      case 'txt':
+                        const { exportAsTxt } = await import('@/lib/export-utils')
+                        exportAsTxt(generatedChapters, metadata)
+                        break
+                      case 'pdf':
+                        const { exportAsPdf } = await import('@/lib/export-utils')
+                        await exportAsPdf(generatedChapters, metadata)
+                        break
+                      case 'docx':
+                        const { exportAsDocx } = await import('@/lib/export-utils')
+                        await exportAsDocx(generatedChapters, metadata)
+                        break
+                      case 'epub':
+                        const { exportAsEpub } = await import('@/lib/export-utils')
+                        await exportAsEpub(generatedChapters, metadata)
+                        break
+                    }
+                  } catch (error) {
+                    console.error('Export error:', error)
+                    alert(`Failed to export as ${exportFormat.toUpperCase()}`)
+                  }
+                }}
                 style={{
                   padding: '1rem 2rem',
                   backgroundColor: '#0000FF',
@@ -606,7 +668,7 @@ export default function WritePage() {
                   cursor: 'pointer'
                 }}
               >
-                💾 Save & Export
+                💾 Download as {exportFormat.toUpperCase()}
               </button>
             </div>
           </div>
