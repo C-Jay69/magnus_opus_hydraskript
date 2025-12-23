@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import llmClient from '@/llm'
+import {
+  chunkManuscript,
+  createChunkAnalysisPrompt,
+  aggregateChunkResults,
+  estimateManuscriptTokens,
+  getChunkingStats,
+} from '@/lib/manuscript-chunking-utils'
+import {
+  recordSuccess,
+  recordRateLimit,
+  recordFailure,
+  shouldSkipProvider,
+  getOptimizedProviderOrder,
+  getOptimizedTimeout,
+  getProviderStatsSummary,
+} from '@/lib/provider-optimization-utils'
+import {
+  callMiniMaxAPI,
+  createMiniMaxAggregationPrompt,
+  estimateAggregationTokens,
+  getMiniMaxStatus,
+} from '@/lib/minimax-integration-utils'
 
 type EditingMode = 'proofread' | 'style' | 'character' | 'chapter' | 'creative' | 'continuity'
 
@@ -112,7 +133,171 @@ Provide a detailed report with:
 5. Plot logic problems
 6. Suggestions for resolving inconsistencies
 
-Be meticulous and help the author maintain internal consistency.`
+Be meticulous and help the author maintain internal consistency.`,
+}
+
+/**
+ * Ultra-optimized AI call with provider caching and smart fallback
+ */
+async function callAIWithOptimizedFallback(
+  prompt: string
+): Promise<{ success: boolean; text: string; model: string; provider: string }> {
+  const groqApiKey = process.env.GROQ_API_KEY
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY
+
+  // Build available providers list
+  const availableProviders: string[] = []
+  if (groqApiKey) availableProviders.push('groq')
+  if (openrouterApiKey) availableProviders.push('openrouter')
+
+  // Get optimized provider order
+  const providerOrder = getOptimizedProviderOrder(availableProviders)
+
+  console.log(`[Editorial Analyze] Trying providers in order: ${providerOrder.join(' → ')}`)
+
+  // Try each provider in optimized order
+  for (const provider of providerOrder) {
+    if (provider === 'groq') {
+      if (!groqApiKey) continue
+
+      const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
+
+      for (const model of groqModels) {
+        const startTime = Date.now()
+
+        try {
+          const timeout = getOptimizedTimeout('groq')
+          console.log(`[Editorial Analyze] Trying Groq ${model} (timeout: ${timeout}ms)...`)
+
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.7,
+              max_tokens: 3000,
+            }),
+            signal: controller.signal,
+          })
+
+          clearTimeout(timeoutId)
+          const responseTime = Date.now() - startTime
+
+          if (response.ok) {
+            const data = await response.json()
+            const text = data.choices?.[0]?.message?.content || 'No feedback generated'
+            recordSuccess('groq', responseTime)
+            console.log(`[Editorial Analyze] ✅ Success with Groq ${model} (${responseTime}ms)`)
+            return { success: true, text, model: model, provider: 'Groq' }
+          }
+
+          const error = await response.json()
+          if (error.error?.code === 'rate_limit_exceeded' || error.error?.message?.includes('rate')) {
+            recordRateLimit('groq')
+            console.log(`[Editorial Analyze] ⚠️ Groq ${model} rate limited, trying next...`)
+            continue
+          }
+
+          if (error.error?.message?.includes('reduce the length')) {
+            recordFailure('groq')
+            console.log(`[Editorial Analyze] ⚠️ Groq ${model} message too long, trying next...`)
+            continue
+          }
+
+          recordFailure('groq')
+          console.error(`[Editorial Analyze] ❌ Groq ${model} error:`, error)
+        } catch (err: any) {
+          if (err.name === 'AbortError') {
+            recordFailure('groq')
+            console.error(`[Editorial Analyze] ❌ Groq ${model} timeout`)
+          } else {
+            recordFailure('groq')
+            console.error(`[Editorial Analyze] ❌ Groq ${model} failed:`, err)
+          }
+        }
+      }
+    }
+
+    if (provider === 'openrouter') {
+      if (!openrouterApiKey) continue
+
+      const openrouterModels = ['meta-llama/llama-3.1-70b-instruct', 'mistralai/mistral-7b-instruct:free']
+
+      for (const model of openrouterModels) {
+        const startTime = Date.now()
+
+        try {
+          const timeout = getOptimizedTimeout('openrouter')
+          console.log(`[Editorial Analyze] Trying OpenRouter ${model} (timeout: ${timeout}ms)...`)
+
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${openrouterApiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+              'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'Magnus Opus',
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.7,
+              max_tokens: 3000,
+            }),
+            signal: controller.signal,
+          })
+
+          clearTimeout(timeoutId)
+          const responseTime = Date.now() - startTime
+
+          if (response.ok) {
+            const data = await response.json()
+            const text = data.choices?.[0]?.message?.content || 'No feedback generated'
+            recordSuccess('openrouter', responseTime)
+            console.log(`[Editorial Analyze] ✅ Success with OpenRouter ${model} (${responseTime}ms)`)
+            return { success: true, text, model: model, provider: 'OpenRouter' }
+          }
+
+          const error = await response.json()
+          if (error.error?.code === 429 || error.error?.message?.includes('rate')) {
+            recordRateLimit('openrouter')
+            console.log(`[Editorial Analyze] ⚠️ OpenRouter ${model} rate limited, trying next...`)
+            continue
+          }
+
+          recordFailure('openrouter')
+          console.error(`[Editorial Analyze] ❌ OpenRouter ${model} error:`, error)
+        } catch (err: any) {
+          if (err.name === 'AbortError') {
+            recordFailure('openrouter')
+            console.error(`[Editorial Analyze] ❌ OpenRouter ${model} timeout`)
+          } else {
+            recordFailure('openrouter')
+            console.error(`[Editorial Analyze] ❌ OpenRouter ${model} failed:`, err)
+          }
+        }
+      }
+    }
+  }
+
+  // All providers failed
+  console.log(getProviderStatsSummary())
+  return {
+    success: false,
+    text: 'All available AI models are currently rate limited or unavailable. Please try again in a few minutes.',
+    model: 'none',
+    provider: 'none',
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -126,59 +311,156 @@ export async function POST(request: NextRequest) {
     }
 
     if (!manuscript || !mode) {
-      return NextResponse.json(
-        { error: 'Manuscript and editing mode are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Manuscript and editing mode are required' }, { status: 400 })
     }
 
-    // Build the prompt
-    let systemPrompt = EDITING_PROMPTS[mode]
-    
-    let userPrompt = `Here is the manuscript to analyze:\n\n${manuscript}`
+    console.log(`[Editorial Analyze] Starting ${mode} analysis...`)
 
-    // Add supporting files if provided
-    if (supportingFiles && supportingFiles.length > 0) {
-      userPrompt += '\n\n--- SUPPORTING REFERENCE FILES ---\n'
-      supportingFiles.forEach(file => {
-        userPrompt += `\n[${file.name}]\n${file.content}\n`
+    // Check manuscript size and determine if chunking is needed
+    const manuscriptTokens = estimateManuscriptTokens(manuscript)
+    console.log(`[Editorial Analyze] Manuscript size: ~${manuscriptTokens} tokens`)
+
+    // If manuscript is small enough, analyze directly
+    if (manuscriptTokens <= 6000) {
+      console.log(`[Editorial Analyze] Manuscript is small enough for direct analysis`)
+
+      const systemPrompt = EDITING_PROMPTS[mode]
+      let userPrompt = `Here is the manuscript to analyze:\n\n${manuscript}`
+
+      if (supportingFiles && supportingFiles.length > 0) {
+        userPrompt += '\n\n--- SUPPORTING REFERENCE FILES ---\n'
+        supportingFiles.forEach((file) => {
+          userPrompt += `\n[${file.name}]\n${file.content.substring(0, 5000)}\n`
+        })
+        userPrompt += '\nUse these reference files to inform your analysis.'
+      }
+
+      if (additionalInstructions && additionalInstructions.trim()) {
+        userPrompt += `\n\n--- AUTHOR'S SPECIFIC REQUESTS ---\n${additionalInstructions}`
+      }
+
+      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`
+      const result = await callAIWithOptimizedFallback(fullPrompt)
+
+      if (!result.success) {
+        return NextResponse.json({ error: result.text }, { status: 503 })
+      }
+
+      return NextResponse.json({
+        feedback: result.text,
+        metadata: {
+          model: result.model,
+          provider: result.provider,
+          cost: '$0.00 (FREE!)',
+          backupChainUsed: 'Groq + OpenRouter (Optimized)',
+          manuscriptSize: 'Small',
+          chunked: false,
+        },
       })
-      userPrompt += '\nUse these reference files to inform your analysis (e.g., check character consistency against character sheets, verify plot points against outlines, etc.).'
     }
 
-    // Add additional instructions if provided
-    if (additionalInstructions && additionalInstructions.trim()) {
-      userPrompt += `\n\n--- AUTHOR'S SPECIFIC REQUESTS ---\n${additionalInstructions}`
-    }
+    // Large manuscript - use chunking
+    console.log(`[Editorial Analyze] Manuscript is large (${manuscriptTokens} tokens) - using chunking strategy`)
 
-    // Combine system and user prompts
-    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`
-
-    console.log(`[Editorial Analyze] Starting ${mode} analysis with FREE LLM...`)
-
-    // Use the FREE LLM client (OpenRouter with free models)
-    const result = await llmClient.generateText(fullPrompt, {
-      maxTokens: 4000,
-      temperature: 0.7
+    const chunks = chunkManuscript(manuscript, {
+      maxTokensPerChunk: 6000,
+      maxCharsPerChunk: 24000,
+      overlapChars: 500,
+      preserveChapterBoundaries: true,
     })
 
-    if (!result.success) {
-      console.error('[Editorial Analyze] LLM generation failed')
-      return NextResponse.json(
-        { error: 'Failed to analyze manuscript. Please try again.' },
-        { status: 500 }
-      )
+    const stats = getChunkingStats(chunks)
+    console.log(
+      `[Editorial Analyze] Split into ${stats.totalChunks} chunks (avg ${stats.avgTokensPerChunk} tokens/chunk)`
+    )
+
+    // Analyze each chunk
+    const chunkResults: Array<{ chunkId: number; analysis: string }> = []
+
+    for (const chunk of chunks) {
+      console.log(`[Editorial Analyze] Analyzing chunk ${chunk.chunkId + 1}/${chunks.length}...`)
+
+      const chunkPrompt = createChunkAnalysisPrompt(chunk, chunks.length, mode)
+      const result = await callAIWithOptimizedFallback(chunkPrompt)
+
+      if (result.success) {
+        chunkResults.push({
+          chunkId: chunk.chunkId,
+          analysis: result.text,
+        })
+        console.log(`[Editorial Analyze] ✅ Chunk ${chunk.chunkId + 1} analyzed successfully`)
+      } else {
+        console.error(`[Editorial Analyze] ❌ Failed to analyze chunk ${chunk.chunkId + 1}`)
+        return NextResponse.json(
+          { error: `Failed to analyze chunk ${chunk.chunkId + 1}: ${result.text}` },
+          { status: 503 }
+        )
+      }
     }
 
-    console.log(`[Editorial Analyze] Success! Model: ${result.model}, Tokens: ${result.tokensUsed}, Time: ${result.responseTime}ms`)
+    // Aggregate results
+    console.log(`[Editorial Analyze] Aggregating results from ${chunkResults.length} chunks...`)
 
-    return NextResponse.json({ 
-      feedback: result.text,
-      metadata: {
-        model: result.model,
-        tokensUsed: result.tokensUsed,
-        responseTime: result.responseTime
+    // Check if aggregation prompt will exceed Groq's limit
+    const estimatedAggregationTokens = estimateAggregationTokens(chunkResults)
+    const miniMaxStatus = getMiniMaxStatus(estimatedAggregationTokens)
+
+    console.log(
+      `[Editorial Analyze] Aggregation prompt size: ~${estimatedAggregationTokens} tokens`
+    )
+    console.log(`[Editorial Analyze] ${miniMaxStatus.recommendation}`)
+
+    let finalResult: { success: boolean; text: string; model: string; provider: string }
+
+    // If aggregation exceeds Groq limit, try MiniMax first
+    if (!miniMaxStatus.canUseGroq && miniMaxStatus.canUseMiniMax) {
+      console.log(`[Editorial Analyze] Aggregation prompt too large for Groq, trying MiniMax...`)
+
+      const miniMaxPrompt = createMiniMaxAggregationPrompt(chunkResults, mode)
+      const miniMaxResult = await callMiniMaxAPI(miniMaxPrompt)
+
+      if (miniMaxResult.success) {
+        finalResult = {
+          success: true,
+          text: miniMaxResult.text,
+          model: 'abab7-preview',
+          provider: 'MiniMax',
+        }
+      } else {
+        console.log(`[Editorial Analyze] MiniMax failed, falling back to standard aggregation...`)
+
+        // Fallback to standard aggregation with Groq/OpenRouter
+        const aggregationPrompt = aggregateChunkResults(chunkResults, mode)
+        finalResult = await callAIWithOptimizedFallback(aggregationPrompt)
       }
+    } else {
+      // Aggregation fits in Groq, use standard aggregation
+      const aggregationPrompt = aggregateChunkResults(chunkResults, mode)
+      finalResult = await callAIWithOptimizedFallback(aggregationPrompt)
+    }
+
+    if (!finalResult.success) {
+      return NextResponse.json({ error: 'Failed to aggregate results: ' + finalResult.text }, { status: 503 })
+    }
+
+    // Log final statistics
+    console.log(getProviderStatsSummary())
+
+    return NextResponse.json({
+      feedback: finalResult.text,
+      metadata: {
+        model: finalResult.model,
+        provider: finalResult.provider,
+        cost: '$0.00 (FREE!)',
+        backupChainUsed: 'Groq + OpenRouter + MiniMax (Optimized)',
+        manuscriptSize: 'Large',
+        chunked: true,
+        chunksProcessed: chunks.length,
+        totalTokensEstimated: stats.totalTokens,
+        averageTokensPerChunk: stats.avgTokensPerChunk,
+        aggregationTokensEstimated: estimatedAggregationTokens,
+        aggregationProvider: finalResult.provider,
+      },
     })
   } catch (error: any) {
     console.error('Error in editorial analysis:', error)

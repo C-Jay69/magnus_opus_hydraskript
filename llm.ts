@@ -33,6 +33,18 @@ export type LLMModelInfo = {
 }
 
 // Configuration from environment variables
+const preferredModel = (process.env.OPENROUTER_PREFERRED_MODEL || '').trim()
+const defaultFallbackModels = [
+  'openrouter/auto',
+  'mistralai/mistral-7b-instruct',
+  'huggingfaceh4/zephyr-7b-beta',
+  'google/gemini-flash-1.5',
+  'deepseek/deepseek-chat',
+]
+const fallbackModelList = preferredModel
+  ? [preferredModel, ...defaultFallbackModels.filter(m => m !== preferredModel)]
+  : defaultFallbackModels
+
 const config = {
   openRouter: {
     apiKey: process.env.OPENROUTER_API_KEY,
@@ -41,18 +53,23 @@ const config = {
     retryDelay: parseInt(process.env.RETRY_DELAY_MS || '5000'),
     timeout: parseInt(process.env.REQUEST_TIMEOUT_MS || '30000'),
   },
+  // Groq provider configuration
+  groq: {
+    apiKey: process.env.GROQ_API_KEY,
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: (process.env.GROQ_PREFERRED_MODEL || '').trim(),
+    maxRetries: parseInt(process.env.MAX_RETRIES || '3'),
+    retryDelay: parseInt(process.env.RETRY_DELAY_MS || '5000'),
+    timeout: parseInt(process.env.REQUEST_TIMEOUT_MS || '30000'),
+  },
   // Fallback models in order of preference
-  fallbackModels: [
-    'x-ai/grok-2',
-    'liquid/lfm-40b',
-    'mistralai/mistral-7b-instruct:free',
-    'huggingfaceh4/zephyr-7b-beta:free',
-    'nousresearch/nous-hermes-2-mistral-7b-dpo:free'
-  ],
+  fallbackModels: fallbackModelList,
   // Rate limiting
   maxConcurrentRequests: parseInt(process.env.MAX_CONCURRENT_REQUESTS || '3'),
   requestQueue: [] as Array<{ resolve: Function, reject: Function }>,
   activeRequests: 0,
+  // Mock fallback when all models fail (helps dev/demo when free models are unavailable)
+  mockOnFailure: (process.env.LLM_ENABLE_MOCK_ON_FAILURE || 'true').toLowerCase() !== 'false',
 }
 
 // Rate limiter function
@@ -156,7 +173,9 @@ class LLMClient {
       const endTime = Date.now()
       const responseTime = endTime - startTime
 
-      console.error(`[LLM] ${requestId} - ${model} - ${responseTime}ms - Error:`, error.message)
+      const status = error?.response?.status
+      const payload = error?.response?.data
+      console.error(`[LLM] ${requestId} - ${model} - ${responseTime}ms - Error:`, error.message, status ? `(status ${status})` : '', payload ? `payload: ${JSON.stringify(payload)}` : '')
 
       // Handle specific errors
       if (error.response) {
@@ -210,6 +229,74 @@ class LLMClient {
     }
   }
 
+  // Groq request path
+  private async makeGroqRequest(prompt: string, model: string, attempt: number = 1): Promise<any> {
+    const requestId = generateRandomId('llm')
+    const startTime = Date.now()
+
+    try {
+      await rateLimitRequest()
+
+      const response = await axios.post(
+        `${config.groq.baseUrl}/chat/completions`,
+        {
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: Number(process.env.GROQ_MAX_TOKENS || 1024),
+          stream: false,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${config.groq.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: config.groq.timeout,
+        }
+      )
+
+      const endTime = Date.now()
+      const responseTime = endTime - startTime
+      console.log(`[LLM] ${requestId} - groq/${model} - ${responseTime}ms - Success`)
+
+      return {
+        success: true,
+        model: `groq/${model}`,
+        response: response.data,
+        requestId,
+        responseTime,
+        tokensUsed: response.data.usage?.total_tokens || 0,
+      }
+    } catch (error: any) {
+      const endTime = Date.now()
+      const responseTime = endTime - startTime
+      const status = error?.response?.status
+      const payload = error?.response?.data
+      console.error(`[LLM] ${requestId} - groq/${model} - ${responseTime}ms - Error:`, error.message, status ? `(status ${status})` : '', payload ? `payload: ${JSON.stringify(payload)}` : '')
+
+      if (error.response) {
+        if (error.response.status === 429 && attempt < config.groq.maxRetries) {
+          console.log(`[LLM] Groq rate limited, retrying (${attempt}/${config.groq.maxRetries})...`)
+          await new Promise(resolve => setTimeout(resolve, config.groq.retryDelay))
+          return this.makeGroqRequest(prompt, model, attempt + 1)
+        }
+        if (error.response.status === 401) {
+          throw new Error('Groq API key is invalid or expired')
+        }
+      }
+
+      if (attempt < config.groq.maxRetries) {
+        console.log(`[LLM] Groq network error, retrying (${attempt}/${config.groq.maxRetries})...`)
+        await new Promise(resolve => setTimeout(resolve, config.groq.retryDelay))
+        return this.makeGroqRequest(prompt, model, attempt + 1)
+      }
+
+      throw new Error(`All attempts failed for Groq model ${model}: ${error.message}`)
+    } finally {
+      releaseRequest()
+    }
+  }
+
   async generateText(prompt: string, options: {
     maxTokens?: number,
     temperature?: number,
@@ -223,6 +310,26 @@ class LLMClient {
     responseTime: number
   }> {
     try {
+      // Try Groq first if configured
+      if (config.groq.apiKey && config.groq.model) {
+        try {
+          const groqResult = await this.makeGroqRequest(prompt, config.groq.model)
+          if (groqResult?.success) {
+            const text = groqResult.response.choices[0].message.content
+            return {
+              success: true,
+              text,
+              model: groqResult.model,
+              requestId: groqResult.requestId,
+              tokensUsed: groqResult.tokensUsed,
+              responseTime: groqResult.responseTime,
+            }
+          }
+        } catch (e: any) {
+          console.warn('[LLM] Groq attempt failed, falling back to OpenRouter:', e?.message)
+        }
+      }
+
       // Use preferred model if specified
       const model = options.modelPreference 
         ? (config.fallbackModels.includes(options.modelPreference) ? options.modelPreference : this.getCurrentModel())
@@ -246,6 +353,19 @@ class LLMClient {
       }
     } catch (error: any) {
       console.error('[LLM] Generation failed:', error.message)
+
+      if (config.mockOnFailure) {
+        const mockText = `Mock analysis (offline/fallback)\n\nYour request could not be fulfilled by any OpenRouter free models available to this API key right now.\n\nWhat you can do next:\n- Try again later (availability changes).\n- Set OPENROUTER_PREFERRED_MODEL in your .env to a model allowed to your key.\n- Upgrade key access or enable a provider with free quota.\n\nSummary of the manuscript (approximate prompts-only analysis):\n- The system received a prompt of length ~${prompt.length} characters.\n- Mode-specific guidance was applied.\n\nNote: This is a placeholder to keep the UI responsive during development.`
+        return {
+          success: true,
+          text: mockText,
+          model: 'mock-local',
+          requestId: generateRandomId('llm'),
+          tokensUsed: 0,
+          responseTime: 0,
+        }
+      }
+
       return {
         success: false,
         text: '',
