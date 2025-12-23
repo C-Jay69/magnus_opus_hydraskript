@@ -20,7 +20,15 @@ import {
   createMiniMaxAggregationPrompt,
   estimateAggregationTokens,
   getMiniMaxStatus,
+  createBatchAggregationPlan,
 } from '@/lib/minimax-integration-utils'
+import {
+  smartRetry,
+  isRetryableError,
+  isRateLimitError,
+  getGlobalConnectionPool,
+  RetryOptions,
+} from '@/lib/resilience-utils'
 
 type EditingMode = 'proofread' | 'style' | 'character' | 'chapter' | 'creative' | 'continuity'
 
@@ -137,25 +145,23 @@ Be meticulous and help the author maintain internal consistency.`,
 }
 
 /**
- * Ultra-optimized AI call with provider caching and smart fallback
+ * Ultra-resilient AI call with retry logic and connection pooling
  */
-async function callAIWithOptimizedFallback(
+async function callAIWithResilience(
   prompt: string
 ): Promise<{ success: boolean; text: string; model: string; provider: string }> {
   const groqApiKey = process.env.GROQ_API_KEY
   const openrouterApiKey = process.env.OPENROUTER_API_KEY
+  const pool = getGlobalConnectionPool()
 
-  // Build available providers list
   const availableProviders: string[] = []
   if (groqApiKey) availableProviders.push('groq')
   if (openrouterApiKey) availableProviders.push('openrouter')
 
-  // Get optimized provider order
   const providerOrder = getOptimizedProviderOrder(availableProviders)
 
   console.log(`[Editorial Analyze] Trying providers in order: ${providerOrder.join(' → ')}`)
 
-  // Try each provider in optimized order
   for (const provider of providerOrder) {
     if (provider === 'groq') {
       if (!groqApiKey) continue
@@ -163,64 +169,73 @@ async function callAIWithOptimizedFallback(
       const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
 
       for (const model of groqModels) {
-        const startTime = Date.now()
-
         try {
           const timeout = getOptimizedTimeout('groq')
-          console.log(`[Editorial Analyze] Trying Groq ${model} (timeout: ${timeout}ms)...`)
 
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), timeout)
+          const result = await smartRetry(
+            async () => {
+              console.log(`[Editorial Analyze] Trying Groq ${model} (timeout: ${timeout}ms)...`)
 
-          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${groqApiKey}`,
-              'Content-Type': 'application/json',
+              const controller = new AbortController()
+              const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+              try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${groqApiKey}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 3000,
+                  }),
+                  signal: controller.signal,
+                })
+
+                clearTimeout(timeoutId)
+
+                if (response.ok) {
+                  const data = await response.json()
+                  const text = data.choices?.[0]?.message?.content || 'No feedback generated'
+                  recordSuccess('groq', 0)
+                  console.log(`[Editorial Analyze] ✅ Success with Groq ${model}`)
+                  return { success: true, text, model, provider: 'Groq' }
+                }
+
+                const error = await response.json()
+
+                if (response.status === 429 || error.error?.code === 'rate_limit_exceeded') {
+                  recordRateLimit('groq')
+                  throw new Error(`Rate limited: ${error.error?.message || 'Unknown'}`)
+                }
+
+                if (error.error?.message?.includes('reduce the length')) {
+                  recordFailure('groq')
+                  throw new Error('Message too long (non-retryable)')
+                }
+
+                recordFailure('groq')
+                throw new Error(`API error: ${error.error?.message || 'Unknown'}`)
+              } finally {
+                clearTimeout(timeoutId)
+              }
             },
-            body: JSON.stringify({
-              model: model,
-              messages: [{ role: 'user', content: prompt }],
-              temperature: 0.7,
-              max_tokens: 3000,
-            }),
-            signal: controller.signal,
-          })
+            `Groq ${model}`,
+            { maxRetries: 3, initialDelayMs: 1000, maxDelayMs: 15000 }
+          )
 
-          clearTimeout(timeoutId)
-          const responseTime = Date.now() - startTime
-
-          if (response.ok) {
-            const data = await response.json()
-            const text = data.choices?.[0]?.message?.content || 'No feedback generated'
-            recordSuccess('groq', responseTime)
-            console.log(`[Editorial Analyze] ✅ Success with Groq ${model} (${responseTime}ms)`)
-            return { success: true, text, model: model, provider: 'Groq' }
+          if (result.success) {
+            return result
           }
-
-          const error = await response.json()
-          if (error.error?.code === 'rate_limit_exceeded' || error.error?.message?.includes('rate')) {
-            recordRateLimit('groq')
-            console.log(`[Editorial Analyze] ⚠️ Groq ${model} rate limited, trying next...`)
-            continue
-          }
-
-          if (error.error?.message?.includes('reduce the length')) {
-            recordFailure('groq')
-            console.log(`[Editorial Analyze] ⚠️ Groq ${model} message too long, trying next...`)
-            continue
-          }
-
-          recordFailure('groq')
-          console.error(`[Editorial Analyze] ❌ Groq ${model} error:`, error)
         } catch (err: any) {
-          if (err.name === 'AbortError') {
-            recordFailure('groq')
-            console.error(`[Editorial Analyze] ❌ Groq ${model} timeout`)
-          } else {
-            recordFailure('groq')
-            console.error(`[Editorial Analyze] ❌ Groq ${model} failed:`, err)
+          if (!isRetryableError(err)) {
+            console.log(`[Editorial Analyze] ⚠️ Groq ${model} non-retryable error, trying next...`)
+            continue
           }
+          console.error(`[Editorial Analyze] ❌ Groq ${model} failed after retries:`, err.message)
         }
       }
     }
@@ -231,73 +246,153 @@ async function callAIWithOptimizedFallback(
       const openrouterModels = ['meta-llama/llama-3.1-70b-instruct', 'mistralai/mistral-7b-instruct:free']
 
       for (const model of openrouterModels) {
-        const startTime = Date.now()
-
         try {
           const timeout = getOptimizedTimeout('openrouter')
-          console.log(`[Editorial Analyze] Trying OpenRouter ${model} (timeout: ${timeout}ms)...`)
 
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), timeout)
+          const result = await smartRetry(
+            async () => {
+              console.log(`[Editorial Analyze] Trying OpenRouter ${model} (timeout: ${timeout}ms)...`)
 
-          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${openrouterApiKey}`,
-              'Content-Type': 'application/json',
-              'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-              'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'Magnus Opus',
+              const controller = new AbortController()
+              const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+              try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${openrouterApiKey}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+                    'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'Magnus Opus',
+                  },
+                  body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 3000,
+                  }),
+                  signal: controller.signal,
+                })
+
+                clearTimeout(timeoutId)
+
+                if (response.ok) {
+                  const data = await response.json()
+                  const text = data.choices?.[0]?.message?.content || 'No feedback generated'
+                  recordSuccess('openrouter', 0)
+                  console.log(`[Editorial Analyze] ✅ Success with OpenRouter ${model}`)
+                  return { success: true, text, model, provider: 'OpenRouter' }
+                }
+
+                const error = await response.json()
+
+                if (response.status === 429) {
+                  recordRateLimit('openrouter')
+                  throw new Error(`Rate limited`)
+                }
+
+                recordFailure('openrouter')
+                throw new Error(`API error: ${error.error?.message || 'Unknown'}`)
+              } finally {
+                clearTimeout(timeoutId)
+              }
             },
-            body: JSON.stringify({
-              model: model,
-              messages: [{ role: 'user', content: prompt }],
-              temperature: 0.7,
-              max_tokens: 3000,
-            }),
-            signal: controller.signal,
-          })
+            `OpenRouter ${model}`,
+            { maxRetries: 3, initialDelayMs: 1000, maxDelayMs: 15000 }
+          )
 
-          clearTimeout(timeoutId)
-          const responseTime = Date.now() - startTime
-
-          if (response.ok) {
-            const data = await response.json()
-            const text = data.choices?.[0]?.message?.content || 'No feedback generated'
-            recordSuccess('openrouter', responseTime)
-            console.log(`[Editorial Analyze] ✅ Success with OpenRouter ${model} (${responseTime}ms)`)
-            return { success: true, text, model: model, provider: 'OpenRouter' }
+          if (result.success) {
+            return result
           }
-
-          const error = await response.json()
-          if (error.error?.code === 429 || error.error?.message?.includes('rate')) {
-            recordRateLimit('openrouter')
-            console.log(`[Editorial Analyze] ⚠️ OpenRouter ${model} rate limited, trying next...`)
+        } catch (err: any) {
+          if (!isRetryableError(err)) {
+            console.log(`[Editorial Analyze] ⚠️ OpenRouter ${model} non-retryable error, trying next...`)
             continue
           }
-
-          recordFailure('openrouter')
-          console.error(`[Editorial Analyze] ❌ OpenRouter ${model} error:`, error)
-        } catch (err: any) {
-          if (err.name === 'AbortError') {
-            recordFailure('openrouter')
-            console.error(`[Editorial Analyze] ❌ OpenRouter ${model} timeout`)
-          } else {
-            recordFailure('openrouter')
-            console.error(`[Editorial Analyze] ❌ OpenRouter ${model} failed:`, err)
-          }
+          console.error(`[Editorial Analyze] ❌ OpenRouter ${model} failed after retries:`, err.message)
         }
       }
     }
   }
 
-  // All providers failed
   console.log(getProviderStatsSummary())
   return {
     success: false,
-    text: 'All available AI models are currently rate limited or unavailable. Please try again in a few minutes.',
+    text: 'All available AI models are currently unavailable. Please try again in a few minutes.',
     model: 'none',
     provider: 'none',
   }
+}
+
+/**
+ * Multi-stage aggregation fallback
+ */
+async function multiStageAggregation(
+  chunkResults: Array<{ chunkId: number; analysis: string }>,
+  editingMode: string
+): Promise<{ success: boolean; text: string; model: string; provider: string }> {
+  console.log(`[Editorial Analyze] Using multi-stage aggregation for ${chunkResults.length} chunks...`)
+
+  const batches = createBatchAggregationPlan(chunkResults, 50)
+  const batchResults: string[] = []
+
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]
+    console.log(`[Editorial Analyze] Aggregating batch ${i + 1}/${batches.length} (${batch.length} chunks)...`)
+
+    const batchPrompt = aggregateChunkResults(batch, editingMode)
+    const batchResult = await callAIWithResilience(batchPrompt)
+
+    if (!batchResult.success) {
+      console.error(`[Editorial Analyze] ❌ Failed to aggregate batch ${i + 1}`)
+      return {
+        success: false,
+        text: `Failed to aggregate batch ${i + 1}: ${batchResult.text}`,
+        model: 'none',
+        provider: 'none',
+      }
+    }
+
+    batchResults.push(batchResult.text)
+    console.log(`[Editorial Analyze] ✅ Batch ${i + 1} aggregated successfully`)
+  }
+
+  console.log(`[Editorial Analyze] Combining ${batchResults.length} batch results...`)
+
+  const combinedPrompt = `You are combining ${batchResults.length} batch analysis results into a final comprehensive report.
+
+BATCH RESULTS:
+${batchResults
+  .map(
+    (result, i) => `
+=== BATCH ${i + 1} ===
+${result}
+`
+  )
+  .join('\n')}
+
+Your task: Create a final, comprehensive report that:
+1. Consolidates findings from all batches
+2. Identifies patterns across all batches
+3. Prioritizes the most critical issues
+4. Provides actionable recommendations
+
+Format as a professional report suitable for an author.`
+
+  const finalResult = await callAIWithResilience(combinedPrompt)
+
+  if (!finalResult.success) {
+    console.error(`[Editorial Analyze] ❌ Failed to combine batch results`)
+    return {
+      success: false,
+      text: `Failed to combine batch results: ${finalResult.text}`,
+      model: 'none',
+      provider: 'none',
+    }
+  }
+
+  console.log(`[Editorial Analyze] ✅ Multi-stage aggregation completed successfully`)
+  return finalResult
 }
 
 export async function POST(request: NextRequest) {
@@ -314,9 +409,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Manuscript and editing mode are required' }, { status: 400 })
     }
 
-    console.log(`[Editorial Analyze] Starting ${mode} analysis...`)
+    console.log(`[Editorial Analyze] Starting ${mode} analysis with ultra-resilience...`)
 
-    // Check manuscript size and determine if chunking is needed
     const manuscriptTokens = estimateManuscriptTokens(manuscript)
     console.log(`[Editorial Analyze] Manuscript size: ~${manuscriptTokens} tokens`)
 
@@ -340,7 +434,7 @@ export async function POST(request: NextRequest) {
       }
 
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`
-      const result = await callAIWithOptimizedFallback(fullPrompt)
+      const result = await callAIWithResilience(fullPrompt)
 
       if (!result.success) {
         return NextResponse.json({ error: result.text }, { status: 503 })
@@ -352,7 +446,7 @@ export async function POST(request: NextRequest) {
           model: result.model,
           provider: result.provider,
           cost: '$0.00 (FREE!)',
-          backupChainUsed: 'Groq + OpenRouter (Optimized)',
+          backupChainUsed: 'Groq + OpenRouter (Ultra-Resilient)',
           manuscriptSize: 'Small',
           chunked: false,
         },
@@ -374,14 +468,14 @@ export async function POST(request: NextRequest) {
       `[Editorial Analyze] Split into ${stats.totalChunks} chunks (avg ${stats.avgTokensPerChunk} tokens/chunk)`
     )
 
-    // Analyze each chunk
+    // Analyze each chunk with resilience
     const chunkResults: Array<{ chunkId: number; analysis: string }> = []
 
     for (const chunk of chunks) {
       console.log(`[Editorial Analyze] Analyzing chunk ${chunk.chunkId + 1}/${chunks.length}...`)
 
       const chunkPrompt = createChunkAnalysisPrompt(chunk, chunks.length, mode)
-      const result = await callAIWithOptimizedFallback(chunkPrompt)
+      const result = await callAIWithResilience(chunkPrompt)
 
       if (result.success) {
         chunkResults.push({
@@ -401,7 +495,6 @@ export async function POST(request: NextRequest) {
     // Aggregate results
     console.log(`[Editorial Analyze] Aggregating results from ${chunkResults.length} chunks...`)
 
-    // Check if aggregation prompt will exceed Groq's limit
     const estimatedAggregationTokens = estimateAggregationTokens(chunkResults)
     const miniMaxStatus = getMiniMaxStatus(estimatedAggregationTokens)
 
@@ -419,7 +512,8 @@ export async function POST(request: NextRequest) {
       const miniMaxPrompt = createMiniMaxAggregationPrompt(chunkResults, mode)
       const miniMaxResult = await callMiniMaxAPI(miniMaxPrompt)
 
-      if (miniMaxResult.success) {
+      if (miniMaxResult.success && miniMaxResult.text && miniMaxResult.text.trim().length > 0) {
+        console.log(`[Editorial Analyze] ✅ MiniMax aggregation successful`)
         finalResult = {
           success: true,
           text: miniMaxResult.text,
@@ -427,23 +521,24 @@ export async function POST(request: NextRequest) {
           provider: 'MiniMax',
         }
       } else {
-        console.log(`[Editorial Analyze] MiniMax failed, falling back to standard aggregation...`)
-
-        // Fallback to standard aggregation with Groq/OpenRouter
-        const aggregationPrompt = aggregateChunkResults(chunkResults, mode)
-        finalResult = await callAIWithOptimizedFallback(aggregationPrompt)
+        console.log(
+          `[Editorial Analyze] MiniMax failed or returned empty, falling back to multi-stage aggregation...`
+        )
+        finalResult = await multiStageAggregation(chunkResults, mode)
       }
-    } else {
-      // Aggregation fits in Groq, use standard aggregation
+    } else if (miniMaxStatus.canUseGroq) {
+      console.log(`[Editorial Analyze] Using Groq for aggregation`)
       const aggregationPrompt = aggregateChunkResults(chunkResults, mode)
-      finalResult = await callAIWithOptimizedFallback(aggregationPrompt)
+      finalResult = await callAIWithResilience(aggregationPrompt)
+    } else {
+      console.log(`[Editorial Analyze] Aggregation exceeds all limits, using multi-stage aggregation`)
+      finalResult = await multiStageAggregation(chunkResults, mode)
     }
 
     if (!finalResult.success) {
       return NextResponse.json({ error: 'Failed to aggregate results: ' + finalResult.text }, { status: 503 })
     }
 
-    // Log final statistics
     console.log(getProviderStatsSummary())
 
     return NextResponse.json({
@@ -452,7 +547,7 @@ export async function POST(request: NextRequest) {
         model: finalResult.model,
         provider: finalResult.provider,
         cost: '$0.00 (FREE!)',
-        backupChainUsed: 'Groq + OpenRouter + MiniMax (Optimized)',
+        backupChainUsed: 'Groq + OpenRouter + MiniMax (Ultra-Resilient)',
         manuscriptSize: 'Large',
         chunked: true,
         chunksProcessed: chunks.length,
