@@ -240,3 +240,22 @@ export function getMiniMaxStatus(estimatedTokens: number): {
 
   return { canUseGroq, canUseMiniMax, recommendation }
 }
+
+/**
+ * Create multi-stage aggregation as fallback
+ * Splits large aggregations into batches
+ */
+export function createBatchAggregationPlan(
+  chunkResults: Array<{ chunkId: number; analysis: string }>,
+  batchSize: number = 50
+): Array<Array<{ chunkId: number; analysis: string }>> {
+  const batches: Array<Array<{ chunkId: number; analysis: string }>> = []
+
+  for (let i = 0; i < chunkResults.length; i += batchSize) {
+    batches.push(chunkResults.slice(i, i + batchSize))
+  }
+
+  console.log(`[MiniMax] Created ${batches.length} batches for multi-stage aggregation`)
+
+  return batches
+}
