@@ -2,355 +2,283 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen" style={{ 
-      backgroundColor: '#DCDFD5',
-      color: '#000000',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
+    <div className="min-h-screen bg-navy">
       {/* Navigation */}
-      <nav style={{
-        borderBottom: '2px solid #000',
-        padding: '1rem 2rem',
-        backgroundColor: '#FFFFFF'
-      }}>
-        <div style={{ 
-          maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img 
-              src="/HYDRASKRIPT_LOGO6.jpg" 
-              alt="Hydraskript Logo" 
-              style={{ 
-                height: '50px',
-                width: 'auto',
-                border: '2px solid #000'
-              }} 
-            />
-            <h1 style={{ 
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              color: '#0000FF'
-            }}>
-              Magnus Opus Hydraskript
-            </h1>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <Link href="/dashboard">
-              <span style={{
-                padding: '0.5rem 1.5rem',
-                backgroundColor: '#0000FF',
-                color: '#FFFFFF',
-                textDecoration: 'none',
-                border: '2px solid #000',
-                fontWeight: '600',
-                boxShadow: '2px 2px 0px 0px rgba(0, 0, 0, 1)',
-                display: 'inline-block',
-                cursor: 'pointer'
-              }}>
+      <nav className="border-b border-navy-light bg-navy-card">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <img 
+                src="/HYDRASKRIPT_LOGO6.jpg" 
+                alt="Hydraskript Logo" 
+                className="h-12 w-auto rounded-md border border-primary/30"
+              />
+              <h1 className="text-2xl font-bold text-primary">
+                HydraSkript
+              </h1>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/dashboard" className="btn-primary">
                 Dashboard
-              </span>
-            </Link>
-            <Link href="/admin">
-              <span style={{
-                padding: '0.5rem 1.5rem',
-                backgroundColor: '#FFBF00',
-                color: '#000000',
-                textDecoration: 'none',
-                border: '2px solid #000',
-                fontWeight: '600',
-                boxShadow: '2px 2px 0px 0px rgba(0, 0, 0, 1)',
-                display: 'inline-block',
-                cursor: 'pointer'
-              }}>
+              </Link>
+              <Link href="/admin" className="btn-secondary">
                 Admin
-              </span>
-            </Link>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '4rem 2rem'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '3rem',
-          alignItems: 'center'
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: '3.5rem',
-              fontWeight: 'bold',
-              marginBottom: '1.5rem',
-              lineHeight: '1.1'
-            }}>
-              <span style={{ color: '#0000FF' }}>Magnus Opus</span>
-                
-
-              <span style={{ color: '#FF00FF' }}>AI eBook Generator</span>
+      <section className="section">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="section-title text-primary glow-text">
+              Stop Writing. Start Publishing.
             </h1>
-            <p style={{
-              fontSize: '1.25rem',
-              marginBottom: '2rem',
-              color: '#333'
-            }}>
-              Generate professional 90-150+ page eBooks with AI. Free-tier architecture, extreme long-form capability.
+            <p className="section-subtitle">
+              HydraSkript isn't another "AI writer." It's a <span className="text-secondary font-semibold">book production engine</span>.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <Link href="/dashboard">
-                <span style={{
-                  padding: '1rem 2rem',
-                  backgroundColor: '#FF00FF',
-                  color: '#FFFFFF',
-                  textDecoration: 'none',
-                  border: '2px solid #000',
-                  fontWeight: '600',
-                  fontSize: '1.1rem',
-                  boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 1)',
-                  display: 'inline-block',
-                  cursor: 'pointer'
-                }}>
-                  ✨ Start Writing
-                </span>
+            <p className="text-lg text-foreground/70 mb-10 max-w-3xl mx-auto">
+              Outlines. Chapters. Editorial logic. Covers. Audio. Exports. If your goal is <em className="text-primary">finished books</em> — not half-written drafts — you're in the right place.
+            </p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Link href="/dashboard" className="btn-primary text-lg px-8 py-4">
+                View Pricing
               </Link>
-              <Link href="/admin">
-                <span style={{
-                  padding: '1rem 2rem',
-                  backgroundColor: '#00FFFF',
-                  color: '#000000',
-                  textDecoration: 'none',
-                  border: '2px solid #000',
-                  fontWeight: '600',
-                  fontSize: '1.1rem',
-                  boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 1)',
-                  display: 'inline-block',
-                  cursor: 'pointer'
-                }}>
-                  📊 Admin Dashboard
-                </span>
+              <Link href="/admin" className="btn-secondary text-lg px-8 py-4">
+                Compare Plans
               </Link>
             </div>
-          </div>
-          
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            padding: '2rem',
-            border: '2px solid #000',
-            boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 1)'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              marginBottom: '1.5rem',
-              color: '#0000FF'
-            }}>
-              Key Features
-            </h3>
-            <ul style={{ 
-              listStyle: 'none',
-              padding: 0,
-              margin: 0
-            }}>
-              {[
-                { icon: '📚', text: '90-150+ Pages', color: '#0000FF' },
-                { icon: '⚡', text: 'Free-Tier Architecture', color: '#FF00FF' },
-                { icon: '🎨', text: 'Multi-Modal Output', color: '#00FFFF' },
-                { icon: '🤖', text: 'AI-Powered Generation', color: '#FFBF00' },
-                { icon: '📤', text: 'PDF, EPUB, DOCX Export', color: '#BEF754' }
-              ].map((feature, index) => (
-                <li 
-                  key={index}
-                  style={{
-                    padding: '1rem',
-                    marginBottom: '0.5rem',
-                    borderLeft: `4px solid ${feature.color}`,
-                    backgroundColor: '#F9F9F9'
-                  }}
-                >
-                  <span style={{ fontSize: '1.5rem', marginRight: '0.5rem' }}>
-                    {feature.icon}
-                  </span>
-                  <span style={{ fontWeight: '600' }}>
-                    {feature.text}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section style={{
-        backgroundColor: '#FFFFFF',
-        borderTop: '2px solid #000',
-        borderBottom: '2px solid #000',
-        padding: '4rem 2rem'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }}>
-          <h2 style={{
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: '1rem'
-          }}>
-            Powerful Features
+      {/* Why HydraSkript Exists */}
+      <section className="section bg-navy-card">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-primary mb-8">
+            Why HydraSkript Exists
           </h2>
-          <p style={{
-            textAlign: 'center',
-            fontSize: '1.1rem',
-            color: '#666',
-            marginBottom: '3rem'
-          }}>
-            Everything you need to create professional eBooks
+          <p className="text-xl text-foreground/80 mb-12">
+            Most tools help you <em className="text-secondary">start</em> writing. HydraSkript helps you <span className="text-primary font-semibold">finish and publish</span>.
           </p>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-primary/30">
+                  <th className="text-left py-4 px-4 text-foreground font-semibold">Feature</th>
+                  <th className="text-left py-4 px-4 text-primary font-semibold">HydraSkript</th>
+                  <th className="text-left py-4 px-4 text-foreground/60 font-semibold">AI Writing Tools</th>
+                  <th className="text-left py-4 px-4 text-foreground/60 font-semibold">Hiring a Human</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-light">
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Full book generation</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> End-to-end</td>
+                  <td className="py-4 px-4"><span className="text-red-400">❌</span> Fragmented</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> Slow & manual</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Structured outlines & chapters</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> Built-in</td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Partial</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span></td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Editorial logic & analysis</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> Included</td>
+                  <td className="py-4 px-4"><span className="text-red-400">❌</span></td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Extra cost</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Covers & formatting</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> Yes</td>
+                  <td className="py-4 px-4"><span className="text-red-400">❌</span></td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Extra cost</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Audiobook generation</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> Yes</td>
+                  <td className="py-4 px-4"><span className="text-red-400">❌</span></td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Very expensive</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Publish-ready exports</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> PDF / EPUB / DOCX</td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Copy-paste</td>
+                  <td className="py-4 px-4"><span className="text-red-400">❌</span></td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Time to finished book</td>
+                  <td className="py-4 px-4 text-secondary font-semibold">Days</td>
+                  <td className="py-4 px-4 text-foreground/60">Weeks</td>
+                  <td className="py-4 px-4 text-foreground/60">Months</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">Cost per book</td>
+                  <td className="py-4 px-4 text-secondary font-semibold">$20–$100</td>
+                  <td className="py-4 px-4 text-foreground/60">$100s + time</td>
+                  <td className="py-4 px-4 text-foreground/60">$3,000–$15,000</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-foreground/90">You own the rights</td>
+                  <td className="py-4 px-4"><span className="text-success">✅</span> Always</td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Depends</td>
+                  <td className="py-4 px-4"><span className="text-warning">⚠️</span> Contract-based</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <p className="text-xl text-primary mt-12 font-semibold">
+            HydraSkript replaces tools, freelancers, and waiting.
+          </p>
+        </div>
+      </section>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem'
-          }}>
-            {[
-              {
-                icon: '📖',
-                title: 'Extreme Long-Form',
-                description: 'Generate 90-150+ page books with maintained coherence and consistency.',
-                color: '#0000FF'
-              },
-              {
-                icon: '⚡',
-                title: 'Free-Tier Architecture',
-                description: 'Zero dependency on paid OpenAI/Anthropic APIs. Uses OpenRouter, FAL.ai, and Gemini.',
-                color: '#FFBF00'
-              },
-              {
-                icon: '🎨',
-                title: 'Multi-Modal Output',
-                description: 'Generate text, images, and audiobooks from a single platform.',
-                color: '#FF00FF'
-              },
-              {
-                icon: '📊',
-                title: 'Admin Dashboard',
-                description: 'Complete system monitoring and user management for platform owners.',
-                color: '#00FFFF'
-              },
-              {
-                icon: '👥',
-                title: 'Character Consistency',
-                description: 'AI ensures character names and details remain consistent throughout.',
-                color: '#BEF754'
-              },
-              {
-                icon: '📤',
-                title: 'Export Options',
-                description: 'Download as PDF, EPUB, DOCX, or generate complete audiobooks.',
-                color: '#FF00FF'
-              }
-            ].map((feature, index) => (
-              <div 
-                key={index}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  padding: '2rem',
-                  border: '2px solid #000',
-                  boxShadow: '2px 2px 0px 0px rgba(0, 0, 0, 1)'
-                }}
-              >
-                <div style={{
-                  fontSize: '3rem',
-                  marginBottom: '1rem'
-                }}>
-                  {feature.icon}
-                </div>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 'bold',
-                  marginBottom: '0.5rem',
-                  color: feature.color
-                }}>
-                  {feature.title}
-                </h3>
-                <p style={{
-                  color: '#666',
-                  lineHeight: '1.6'
-                }}>
-                  {feature.description}
-                </p>
+      {/* Pricing Tiers */}
+      <section className="section">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-center section-title mb-16">Choose Your Weapon</h2>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Starter */}
+            <div className="pricing-card pricing-card-starter">
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-2">🏅</div>
+                <h3 className="text-2xl font-bold text-foreground mb-1">Starter</h3>
+                <p className="text-foreground/60 italic">Test the Waters</p>
               </div>
-            ))}
+              <div className="mb-6">
+                <div className="text-4xl font-bold text-secondary mb-2">$29<span className="text-xl text-foreground/60"> / month</span></div>
+                <p className="text-sm text-foreground/70">Perfect for testing ideas and kicking the tyres.</p>
+              </div>
+              <div className="space-y-3 mb-6">
+                <p className="font-semibold text-foreground">Includes:</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="feature-item"><span className="feature-icon">•</span> 100 credits / month</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Outline & chapter generation</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Partial book creation</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> 1 active project</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> PDF export</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Standard processing queue</li>
+                </ul>
+              </div>
+              <p className="text-sm text-foreground/70"><strong>Best for:</strong> indie writers, bloggers, the "maybe I'll write a book" crowd.</p>
+            </div>
+
+            {/* Author - Most Popular */}
+            <div className="pricing-card pricing-card-author relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold">
+                ⭐ Most Popular
+              </div>
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-2">🏅</div>
+                <h3 className="text-2xl font-bold text-foreground mb-1">Author</h3>
+                <p className="text-foreground/60 italic">Where Real Books Are Born</p>
+              </div>
+              <div className="mb-6">
+                <div className="text-4xl font-bold text-primary mb-2">$79<span className="text-xl text-foreground/60"> / month</span></div>
+                <p className="text-sm text-foreground/70">This is where HydraSkript starts paying for itself.</p>
+              </div>
+              <div className="space-y-3 mb-6">
+                <p className="font-semibold text-foreground">Includes:</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="feature-item"><span className="feature-icon">•</span> 400 credits / month</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Generate <strong>1 full-length book per month</strong></li>
+                  <li className="feature-item"><span className="feature-icon">•</span> PDF, EPUB & DOCX exports</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> AI cover generation</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Editorial analysis pass</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> 5 active projects</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Faster processing queue</li>
+                </ul>
+              </div>
+              <p className="text-sm text-foreground/70"><strong>Best for:</strong> authors, educators, serious creators.</p>
+            </div>
+
+            {/* Publisher */}
+            <div className="pricing-card pricing-card-publisher">
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-2">🏅</div>
+                <h3 className="text-2xl font-bold text-foreground mb-1">Publisher</h3>
+                <p className="text-foreground/60 italic">Scale the Output</p>
+              </div>
+              <div className="mb-6">
+                <div className="text-4xl font-bold text-primary mb-2">$149<span className="text-xl text-foreground/60"> / month</span></div>
+                <p className="text-sm text-foreground/70">For people who publish, not dabble.</p>
+              </div>
+              <div className="space-y-3 mb-6">
+                <p className="font-semibold text-foreground">Includes:</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="feature-item"><span className="feature-icon">•</span> 1,000 credits / month</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> 2-3 full books per month</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Audiobook generation</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Advanced editorial logic</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Series & multi-book workflows</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Highest priority queue</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Early access to new features</li>
+                </ul>
+              </div>
+              <p className="text-sm text-foreground/70"><strong>Best for:</strong> publishers, agencies, content businesses.</p>
+            </div>
+
+            {/* Studio */}
+            <div className="pricing-card pricing-card-studio">
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-2">🐉</div>
+                <h3 className="text-2xl font-bold text-foreground mb-1">Studio</h3>
+                <p className="text-foreground/60 italic">IP Factory Mode</p>
+              </div>
+              <div className="mb-6">
+                <div className="text-4xl font-bold text-secondary mb-2">From $299<span className="text-xl text-foreground/60"> / month</span></div>
+                <p className="text-sm text-foreground/70">Built for volume, teams, and commercial scale.</p>
+              </div>
+              <div className="space-y-3 mb-6">
+                <p className="font-semibold text-foreground">Includes:</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="feature-item"><span className="feature-icon">•</span> 3,000+ credits</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Bulk & batch generation</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> White-label exports</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Team accounts</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Priority support</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> Commercial licensing included</li>
+                  <li className="feature-item"><span className="feature-icon">•</span> API access (coming soon)</li>
+                </ul>
+              </div>
+              <p className="text-sm text-foreground/70"><strong>Best for:</strong> studios, IP farms, serious operators.</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '4rem 2rem'
-      }}>
-        <div style={{
-          background: 'linear-gradient(135deg, #FF00FF 0%, #00FFFF 100%)',
-          padding: '3rem',
-          border: '2px solid #000',
-          boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 1)',
-          textAlign: 'center'
-        }}>
-          <h2 style={{
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            marginBottom: '1rem',
-            color: '#FFFFFF'
-          }}>
-            Ready to Create Your Magnum Opus?
+      <section className="section bg-gradient-to-br from-navy-card to-navy">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-primary mb-6 glow-text">
+            Ready to Publish?
           </h2>
-          <p style={{
-            fontSize: '1.2rem',
-            marginBottom: '2rem',
-            color: '#FFFFFF'
-          }}>
-            Start generating professional eBooks with AI. No technical skills required.
+          <p className="text-2xl text-secondary mb-4">
+            Stop flirting with the idea of a book.
           </p>
-          <Link href="/dashboard">
-            <span style={{
-              padding: '1rem 2.5rem',
-              backgroundColor: '#FFFFFF',
-              color: '#000000',
-              textDecoration: 'none',
-              border: '2px solid #000',
-              fontWeight: '600',
-              fontSize: '1.2rem',
-              boxShadow: '4px 4px 0px 0px rgba(0, 0, 0, 1)',
-              display: 'inline-block',
-              cursor: 'pointer'
-            }}>
-              🚀 Start Writing Now
-            </span>
+          <p className="text-2xl text-primary mb-10">
+            Start shipping them.
+          </p>
+          <Link href="/dashboard" className="btn-primary text-xl px-10 py-5 inline-block">
+            Get Started with HydraSkript →
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={{
-        borderTop: '2px solid #000',
-        padding: '2rem',
-        textAlign: 'center',
-        backgroundColor: '#FFFFFF'
-      }}>
-        <p style={{ color: '#666' }}>
-          Magnus Opus Hydraskript © 2025 | AI-Powered eBook Generation Platform
-        </p>
+      <footer className="border-t border-navy-light py-8 bg-navy-card">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-foreground/60">
+            Magnus Opus Hydraskript © 2025 | AI-Powered Book Production Engine
+          </p>
+        </div>
       </footer>
     </div>
   )

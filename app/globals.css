@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* HydraSkript Color Palette */
+  --background: 210 25% 8%; /* #0a0e1a - Very dark navy */
+  --foreground: 215 20% 85%; /* Light blue-grey for text */
+  
+  --primary: 220 100% 82%; /* #a8c5ff - Light blue/periwinkle */
+  --primary-foreground: 210 25% 8%; /* Dark navy */
+  
+  --secondary: 183 84% 63%; /* #5ce1e6 - Cyan/turquoise */
+  --secondary-foreground: 210 25% 8%;
+  
+  --accent: 255 71% 85%; /* #c8b6ff - Purple/lavender */
+  --accent-foreground: 210 25% 8%;
+  
+  --card: 215 20% 15%; /* #1e2433 - Card background */
+  --card-foreground: 215 20% 85%;
+  
+  --border: 215 20% 25%;
+  --input: 215 20% 25%;
+  --ring: 220 100% 82%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-navy text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-primary;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* HydraSkript-style pricing cards */
+  .pricing-card {
+    @apply bg-navy-card border-2 rounded-lg p-8 transition-all duration-300;
+    @apply hover:shadow-card-hover;
+  }
+  
+  .pricing-card-starter {
+    @apply border-secondary;
+  }
+  
+  .pricing-card-author {
+    @apply border-primary;
+  }
+  
+  .pricing-card-publisher {
+    @apply border-primary-dark;
+  }
+  
+  .pricing-card-studio {
+    @apply border-secondary;
+  }
+  
+  /* Modern buttons */
+  .btn-primary {
+    @apply bg-accent text-accent-foreground px-6 py-3 rounded-md font-semibold;
+    @apply transition-all duration-200 hover:brightness-110;
+  }
+  
+  .btn-secondary {
+    @apply border-2 border-primary text-primary bg-transparent px-6 py-3 rounded-md font-semibold;
+    @apply transition-all duration-200 hover:bg-primary hover:text-primary-foreground;
+  }
+  
+  /* Feature list items */
+  .feature-item {
+    @apply flex items-start gap-3 py-2;
+  }
+  
+  .feature-icon {
+    @apply mt-1 flex-shrink-0;
+  }
+  
+  /* Section spacing */
+  .section {
+    @apply py-16 md:py-24;
+  }
+  
+  .section-title {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold mb-6;
+  }
+  
+  .section-subtitle {
+    @apply text-xl md:text-2xl text-foreground/80 mb-8;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 20px rgba(168, 197, 255, 0.5);
+  }
+  
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(92, 225, 230, 0.3);
+  }
+}
