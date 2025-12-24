@@ -3,25 +3,25 @@
 @tailwind utilities;
 
 :root {
-  /* HydraSkript Color Palette */
-  --background: 210 25% 8%; /* #0a0e1a - Very dark navy */
-  --foreground: 215 20% 85%; /* Light blue-grey for text */
+  /* Modern Gradient Color Palette (from PDF design) */
+  --background: 222 47% 11%; /* #0F172A - Slate 900 */
+  --foreground: 210 40% 98%; /* #F1F5F9 - Slate 100 */
   
-  --primary: 220 100% 82%; /* #a8c5ff - Light blue/periwinkle */
-  --primary-foreground: 210 25% 8%; /* Dark navy */
+  --primary: 258 90% 66%; /* #A78BFA - Purple */
+  --primary-foreground: 222 47% 11%; /* Dark slate */
   
-  --secondary: 183 84% 63%; /* #5ce1e6 - Cyan/turquoise */
-  --secondary-foreground: 210 25% 8%;
+  --secondary: 187 85% 53%; /* #22D3EE - Cyan */
+  --secondary-foreground: 222 47% 11%;
   
-  --accent: 255 71% 85%; /* #c8b6ff - Purple/lavender */
-  --accent-foreground: 210 25% 8%;
+  --accent: 213 94% 68%; /* #60A5FA - Blue */
+  --accent-foreground: 222 47% 11%;
   
-  --card: 215 20% 15%; /* #1e2433 - Card background */
-  --card-foreground: 215 20% 85%;
+  --card: 217 33% 17%; /* #1E293B - Slate 800 */
+  --card-foreground: 210 40% 98%;
   
   --border: 215 20% 25%;
   --input: 215 20% 25%;
-  --ring: 220 100% 82%;
+  --ring: 258 90% 66%;
   
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
@@ -35,57 +35,85 @@
   }
   
   body {
-    @apply bg-navy text-foreground;
+    @apply bg-slate-900 text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply text-primary;
     font-weight: 700;
   }
 }
 
 @layer components {
-  /* HydraSkript-style pricing cards */
-  .pricing-card {
-    @apply bg-navy-card border-2 rounded-lg p-8 transition-all duration-300;
+  /* Gradient text utility */
+  .gradient-text {
+    background: linear-gradient(to right, #A78BFA, #22D3EE);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+  
+  /* Gradient buttons */
+  .btn-gradient {
+    @apply px-6 py-3 rounded-md font-semibold transition-all duration-200;
+    background: linear-gradient(to right, #A78BFA, #22D3EE);
+    color: #0F172A;
+  }
+  
+  .btn-gradient:hover {
+    @apply brightness-110 shadow-glow-gradient;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-slate-100 text-slate-100 bg-transparent px-6 py-3 rounded-md font-semibold;
+    @apply transition-all duration-200 hover:bg-slate-100/10;
+  }
+  
+  /* Primary button (gradient) */
+  .btn-primary {
+    @apply btn-gradient;
+  }
+  
+  /* Secondary button (outline) */
+  .btn-secondary {
+    @apply btn-outline;
+  }
+  
+  /* Gradient icon background */
+  .gradient-icon-bg {
+    background: linear-gradient(to bottom right, #A78BFA, #22D3EE);
+  }
+  
+  /* Gradient underline/divider */
+  .gradient-underline {
+    background: linear-gradient(to right, #A78BFA, #22D3EE);
+    height: 3px;
+    width: 100%;
+  }
+  
+  /* Feature cards */
+  .feature-card {
+    @apply bg-slate-800 border border-slate-700 rounded-lg p-8 transition-all duration-300;
     @apply hover:shadow-card-hover;
   }
   
-  .pricing-card-starter {
-    @apply border-secondary;
+  /* Pricing cards */
+  .pricing-card {
+    @apply rounded-lg p-8 transition-all duration-300;
+    @apply hover:shadow-card-hover;
   }
   
-  .pricing-card-author {
-    @apply border-primary;
+  .pricing-card-cyan {
+    @apply bg-gradient-to-br from-secondary to-secondary-light text-slate-900;
   }
   
-  .pricing-card-publisher {
-    @apply border-primary-dark;
+  .pricing-card-purple {
+    @apply bg-gradient-to-br from-primary to-accent text-slate-900;
   }
   
-  .pricing-card-studio {
-    @apply border-secondary;
-  }
-  
-  /* Modern buttons */
-  .btn-primary {
-    @apply bg-accent text-accent-foreground px-6 py-3 rounded-md font-semibold;
-    @apply transition-all duration-200 hover:brightness-110;
-  }
-  
-  .btn-secondary {
-    @apply border-2 border-primary text-primary bg-transparent px-6 py-3 rounded-md font-semibold;
-    @apply transition-all duration-200 hover:bg-primary hover:text-primary-foreground;
-  }
-  
-  /* Feature list items */
-  .feature-item {
-    @apply flex items-start gap-3 py-2;
-  }
-  
-  .feature-icon {
-    @apply mt-1 flex-shrink-0;
+  .pricing-card-dark {
+    @apply bg-slate-900 border-2 border-slate-700 text-slate-100;
   }
   
   /* Section spacing */
@@ -98,7 +126,16 @@
   }
   
   .section-subtitle {
-    @apply text-xl md:text-2xl text-foreground/80 mb-8;
+    @apply text-xl md:text-2xl text-slate-300 mb-8;
+  }
+  
+  /* Feature list items */
+  .feature-item {
+    @apply flex items-start gap-3 py-2;
+  }
+  
+  .feature-icon {
+    @apply mt-1 flex-shrink-0;
   }
 }
 
@@ -108,10 +145,14 @@
   }
   
   .glow-text {
-    text-shadow: 0 0 20px rgba(168, 197, 255, 0.5);
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
   }
   
   .glow-cyan {
-    box-shadow: 0 0 20px rgba(92, 225, 230, 0.3);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+  }
+  
+  .glow-gradient {
+    box-shadow: 0 0 30px rgba(167, 139, 250, 0.4), 0 0 60px rgba(34, 211, 238, 0.2);
   }
 }

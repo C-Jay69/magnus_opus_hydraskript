@@ -17,7 +17,7 @@ module.exports = {
       },
     },
     extend: {
-      // HydraSkript-inspired Color Palette
+      // Modern Gradient Color Palette (from PDF design)
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -25,28 +25,35 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         
-        // Primary brand colors from HydraSkript design
+        // Gradient brand colors from PDF design
         primary: {
-          DEFAULT: "#a8c5ff", // Light blue/periwinkle
-          foreground: "#0a0e1a", // Dark navy text
-          dark: "#7da8ff", // Darker blue variant
+          DEFAULT: "#A78BFA", // Purple
+          light: "#C4B5FD", // Light purple
+          foreground: "#0F172A", // Dark slate text
         },
         secondary: {
-          DEFAULT: "#5ce1e6", // Cyan/turquoise
-          foreground: "#0a0e1a", // Dark text
-          dark: "#00d9ff", // Bright cyan
+          DEFAULT: "#22D3EE", // Cyan
+          light: "#67E8F9", // Light cyan
+          foreground: "#0F172A", // Dark text
         },
         accent: {
-          DEFAULT: "#c8b6ff", // Purple/lavender
-          foreground: "#0a0e1a", // Dark text
-          dark: "#d4c5ff", // Light lavender
+          DEFAULT: "#60A5FA", // Blue
+          light: "#93C5FD", // Light blue
+          foreground: "#0F172A", // Dark text
         },
         
-        // Background colors
-        navy: {
-          DEFAULT: "#0a0e1a", // Very dark navy
-          light: "#1a1f2e", // Medium dark
-          card: "#1e2433", // Card background
+        // Background colors (slate palette)
+        slate: {
+          50: "#F8FAFC",
+          100: "#F1F5F9",
+          200: "#E2E8F0",
+          300: "#CBD5E1",
+          400: "#94A3B8",
+          500: "#64748B",
+          600: "#475569",
+          700: "#334155",
+          800: "#1E293B",
+          900: "#0F172A",
         },
         
         // Status colors
@@ -55,43 +62,47 @@ module.exports = {
           foreground: "hsl(var(--destructive-foreground))",
         },
         success: {
-          DEFAULT: "#5ce1e6", // Cyan for success
-          foreground: "#0a0e1a",
+          DEFAULT: "#22D3EE", // Cyan for success
+          foreground: "#0F172A",
         },
         warning: {
-          DEFAULT: "#ffd700", // Gold for warnings
-          foreground: "#0a0e1a",
-        },
-        
-        // Neutral colors
-        neutral: {
-          DEFAULT: "#DCDFD5", // Off-White/Grey
-          foreground: "#0a0e1a",
+          DEFAULT: "#fbbf24", // Amber for warnings
+          foreground: "#0F172A",
         },
       },
       
-      // Modern border radius (less brutalist, more refined)
+      // Modern border radius
       borderRadius: {
-        lg: "12px",
-        md: "8px",
-        sm: "6px",
-        xs: "4px",
-        none: "0px",
+        lg: "0.75rem",
+        md: "0.5rem",
+        sm: "0.375rem",
+        xs: "0.25rem",
       },
       
       // Custom Fonts
       fontFamily: {
-        sans: ["var(--font-sans)", "Inter", "Plus Jakarta Sans", ...fontFamily.sans],
+        sans: ["var(--font-sans)", "Inter", "system-ui", ...fontFamily.sans],
         mono: ["var(--font-mono)", ...fontFamily.mono],
         display: ["var(--font-display)", "Inter", ...fontFamily.sans],
       },
       
-      // Refined shadows (less brutalist, more subtle)
+      // Modern shadows with gradient glows
       boxShadow: {
         card: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
         "card-hover": "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
-        glow: "0 0 20px rgba(168, 197, 255, 0.3)",
-        "glow-cyan": "0 0 20px rgba(92, 225, 230, 0.3)",
+        glow: "0 0 20px rgba(167, 139, 250, 0.3)",
+        "glow-cyan": "0 0 20px rgba(34, 211, 238, 0.3)",
+        "glow-gradient": "0 0 30px rgba(167, 139, 250, 0.4), 0 0 60px rgba(34, 211, 238, 0.2)",
+      },
+      
+      // Gradient backgrounds
+      backgroundImage: {
+        "gradient-primary": "linear-gradient(to right, #A78BFA, #22D3EE)",
+        "gradient-primary-vertical": "linear-gradient(to bottom, #A78BFA, #22D3EE)",
+        "gradient-purple-blue": "linear-gradient(to right, #A78BFA, #60A5FA)",
+        "gradient-blue-cyan": "linear-gradient(to right, #60A5FA, #22D3EE)",
+        "gradient-radial": "radial-gradient(circle, #A78BFA, #22D3EE)",
+        "gradient-dark": "linear-gradient(to bottom, #0F172A, #1E293B)",
       },
       
       // Custom Animation
@@ -110,8 +121,8 @@ module.exports = {
           "100%": { transform: "translateY(0)", opacity: 1 },
         },
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 20px rgba(168, 197, 255, 0.3)" },
-          "50%": { boxShadow: "0 0 30px rgba(168, 197, 255, 0.5)" },
+          "0%, 100%": { boxShadow: "0 0 20px rgba(167, 139, 250, 0.3)" },
+          "50%": { boxShadow: "0 0 30px rgba(167, 139, 250, 0.5)" },
         },
       },
     },
