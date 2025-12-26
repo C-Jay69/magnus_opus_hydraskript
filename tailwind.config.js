@@ -1,4 +1,4 @@
-const { fontFamily } = require("tailwindcss/defaultTheme")
+const { fontFamily } = require("tailwindcss/defaultTheme");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -54,45 +54,10 @@ module.exports = {
           700: "#334155",
           800: "#1E293B",
           900: "#0F172A",
+          950: "#020617",
         },
-        
-        // Status colors
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        success: {
-          DEFAULT: "#22D3EE", // Cyan for success
-          foreground: "#0F172A",
-        },
-        warning: {
-          DEFAULT: "#fbbf24", // Amber for warnings
-          foreground: "#0F172A",
-        },
-      },
-      
-      // Modern border radius
-      borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.375rem",
-        xs: "0.25rem",
-      },
-      
-      // Custom Fonts
-      fontFamily: {
-        sans: ["var(--font-sans)", "Inter", "system-ui", ...fontFamily.sans],
-        mono: ["var(--font-mono)", ...fontFamily.mono],
-        display: ["var(--font-display)", "Inter", ...fontFamily.sans],
-      },
-      
-      // Modern shadows with gradient glows
-      boxShadow: {
-        card: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
-        "card-hover": "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
-        glow: "0 0 20px rgba(167, 139, 250, 0.3)",
-        "glow-cyan": "0 0 20px rgba(34, 211, 238, 0.3)",
-        "glow-gradient": "0 0 30px rgba(167, 139, 250, 0.4), 0 0 60px rgba(34, 211, 238, 0.2)",
+        destructive: "hsl(var(--destructive))",
+        destructiveForeground: "hsl(var(--destructive-foreground))",
       },
       
       // Gradient backgrounds
@@ -131,4 +96,4 @@ module.exports = {
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
   ],
-}
+};

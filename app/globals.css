@@ -56,45 +56,19 @@
   
   /* Gradient buttons */
   .btn-gradient {
-    @apply px-6 py-3 rounded-md font-semibold transition-all duration-200;
-    background: linear-gradient(to right, #A78BFA, #22D3EE);
-    color: #0F172A;
-  }
-  
-  .btn-gradient:hover {
-    @apply brightness-110 shadow-glow-gradient;
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground;
+    @apply hover:from-primary-light hover:to-secondary-light;
+    @apply transition-all duration-300;
   }
   
   .btn-outline {
-    @apply border-2 border-slate-100 text-slate-100 bg-transparent px-6 py-3 rounded-md font-semibold;
-    @apply transition-all duration-200 hover:bg-slate-100/10;
-  }
-  
-  /* Primary button (gradient) */
-  .btn-primary {
-    @apply btn-gradient;
-  }
-  
-  /* Secondary button (outline) */
-  .btn-secondary {
-    @apply btn-outline;
-  }
-  
-  /* Gradient icon background */
-  .gradient-icon-bg {
-    background: linear-gradient(to bottom right, #A78BFA, #22D3EE);
-  }
-  
-  /* Gradient underline/divider */
-  .gradient-underline {
-    background: linear-gradient(to right, #A78BFA, #22D3EE);
-    height: 3px;
-    width: 100%;
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground;
+    @apply transition-all duration-300;
   }
   
   /* Feature cards */
   .feature-card {
-    @apply bg-slate-800 border border-slate-700 rounded-lg p-8 transition-all duration-300;
+    @apply bg-card border border-slate-700 rounded-lg p-8 transition-all duration-300;
     @apply hover:shadow-card-hover;
   }
   
