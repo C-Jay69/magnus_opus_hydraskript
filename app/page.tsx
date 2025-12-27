@@ -5,12 +5,6 @@ import { Button } from "@/components/ui/button"; // Or your button component
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-900 text-foreground">
-      {/* All your sections here */}
-    </main>
-  )
-}
-
-    <main className="min-h-screen bg-slate-900 text-foreground">
       {/* Hero Section - Already matching your screenshot */}
       <section className="section relative overflow-hidden">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-8 py-16">
@@ -23,8 +17,7 @@ export default function Home() {
             </div>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/hero-home.jpg" alt="Cozy creative workspace" width={1000} height={600} className="rounded-lg shadow-2xl glow-gradient" priority />
-            
+            <Image src="/images/hero-home.jpg" alt="Cozy creative workspace" width={800} height={600} className="rounded-lg shadow-2xl glow-gradient" priority />
           </div>
         </div>
       </section>
@@ -87,7 +80,7 @@ export default function Home() {
             </ul>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/kids-forest.jpg" alt="Whimsical kids book illustration" width={1000} height={400} className="rounded-lg glow-gradient" />
+            <Image src="/images/kids-forest.jpg" alt="Whimsical kids book illustration" width={600} height={400} className="rounded-lg glow-gradient" />
           </div>
         </div>
       </section>
@@ -106,7 +99,7 @@ export default function Home() {
             </ul>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/audiobook-studio.jpg" alt="Recording studio setup" width={1000} height={400} className="rounded-lg glow-gradient" />
+            <Image src="/images/audiobook-studio1.jpg" alt="Recording studio setup" width={600} height={400} className="rounded-lg glow-gradient" />
           </div>
         </div>
       </section>
@@ -121,4 +114,5 @@ export default function Home() {
         © 2025 HydraSkript. All rights reserved.
       </footer>
     </main>
-  
+  );
+}
