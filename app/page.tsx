@@ -62,7 +62,7 @@ export default function Home() {
             <p>Integrate multimedia elements seamlessly—add images, embed audio narration, and create interactive features that engage readers like never before.</p>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/ideas-into-ebooks.jpg" alt="E-Book example" width={1000} height={400} className="rounded-lg glow-gradient" />
+            <Image src="/images/ideas-into-ebooks1.jpg" alt="E-Book example" width={1000} height={400} className="rounded-lg glow-gradient" />
           </div>
         </div>
       </section>
