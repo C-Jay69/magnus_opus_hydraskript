@@ -3,7 +3,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button"; // Or your button component
 
 export default function Home() {
-  return (
+  return
+   }
+
     <main className="min-h-screen bg-slate-900 text-foreground">
       {/* Hero Section - Already matching your screenshot */}
       <section className="section relative overflow-hidden">
@@ -115,5 +117,4 @@ export default function Home() {
         © 2025 HydraSkript. All rights reserved.
       </footer>
     </main>
-  );
-}
+  
