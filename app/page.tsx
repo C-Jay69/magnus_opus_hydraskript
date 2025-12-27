@@ -3,8 +3,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button"; // Or your button component
 
 export default function Home() {
-  return
-   }
+  return (
+    <main className="min-h-screen bg-slate-900 text-foreground">
+      {/* All your sections here */}
+    </main>
+  )
+}
 
     <main className="min-h-screen bg-slate-900 text-foreground">
       {/* Hero Section - Already matching your screenshot */}
