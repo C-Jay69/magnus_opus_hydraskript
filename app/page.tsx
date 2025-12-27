@@ -17,7 +17,8 @@ export default function Home() {
             </div>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/hero-home.jpg" alt="Cozy creative workspace" width={800} height={600} className="rounded-lg shadow-2xl glow-gradient" priority />
+            <Image src="/images/hero-home.jpg" alt="Cozy creative workspace" width={1000} height={600} className="rounded-lg shadow-2xl glow-gradient" priority />
+            
           </div>
         </div>
       </section>
@@ -48,7 +49,7 @@ export default function Home() {
               <p>Train our AI to match your exact tone, style, and voice for consistent, personalized content generation every time.</p>
             </div>
           </div>
-          <Image src="/images/collaboration.jpg" alt="Group collaborating" width={1000} height={600} className="mt-16 mx-auto rounded-lg glow-gradient" />
+          <Image src="/images/collaboration1.jpg" alt="Group collaborating" width={1000} height={600} className="mt-16 mx-auto rounded-lg glow-gradient" />
         </div>
       </section>
 
@@ -62,7 +63,7 @@ export default function Home() {
             <p>Integrate multimedia elements seamlessly—add images, embed audio narration, and create interactive features that engage readers like never before.</p>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/ebooks-placeholder.jpg" alt="E-Book example" width={600} height={400} className="rounded-lg glow-gradient" />
+            <Image src="/images/ideas-into-ebooks.jpg" alt="E-Book example" width={1000} height={400} className="rounded-lg glow-gradient" />
           </div>
         </div>
       </section>
@@ -80,7 +81,7 @@ export default function Home() {
             </ul>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/kids-forest.jpg" alt="Whimsical kids book illustration" width={600} height={400} className="rounded-lg glow-gradient" />
+            <Image src="/images/kids-forest.jpg" alt="Whimsical kids book illustration" width={1000} height={400} className="rounded-lg glow-gradient" />
           </div>
         </div>
       </section>
@@ -99,7 +100,7 @@ export default function Home() {
             </ul>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0">
-            <Image src="/images/audiobook-studio.jpg" alt="Recording studio setup" width={600} height={400} className="rounded-lg glow-gradient" />
+            <Image src="/images/audiobook-studio.jpg" alt="Recording studio setup" width={1000} height={400} className="rounded-lg glow-gradient" />
           </div>
         </div>
       </section>
